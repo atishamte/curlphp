@@ -11,9 +11,9 @@
      * @author        	Atish Amte
      */
 
-    namespace phpcurl;
+    namespace curlphp;
 
-    class phpCurl
+    class curlphp
     {
         // Curl object
         private $_curl;
@@ -46,7 +46,7 @@
                     throw new \Exception("PHP cURL is not enabled on server.");
                 }
             } catch (\Exception $e) {
-                return $e->getMessage();
+                echo $e->getMessage();
             }
         }
 
@@ -54,31 +54,38 @@
 
         function setOption($code, $value, $prefix = 'opt')
         {
-            if (is_string($code) && !is_numeric($code)) {
-                $code = constant('CURL' . strtoupper($prefix) . '_' . strtoupper($code));
+            try {
+                if (is_string($code) && !is_numeric($code)) {
+                    $code = constant('CURL' . strtoupper($prefix) . '_' . strtoupper($code));
+                }
+                if(is_numeric($code)) {
+                    $this->_options[$code] = $value;
+
+                    return $this;
+                } else {
+                    throw new \Exception("Invalid use of constant code.");
+                }
+
+            } catch (\Exception $e) {
+                echo $e->getMessage();
             }
-            $this->_options[$code] = $value;
-
-            return $this;
-        }
-
-        function options($options = array())
-        {
-            foreach ($options as $option_code => $option_value) {
-                $this->setOption($option_code, $option_value);
-            }
-
-            curl_setopt_array($this->_curl, $this->_options);
-
-            return $this;
         }
 
         function setMethod($method)
         {
-            $this->_method = $method;
-            $this->_options[CURLOPT_CUSTOMREQUEST] = strtoupper($method);
+            try {
+                if(in_array(strtoupper($method),['POST','PUT','GET','PATCH','DELETE'])) {
+                    $this->_method = $method;
+                    $this->_options[CURLOPT_CUSTOMREQUEST] = strtoupper($method);
 
-            return $this;
+                    return $this;
+                } else {
+                    throw new \Exception("Invalid HTTP request method used.");
+                }
+
+            } catch (\Exception $e) {
+                echo $e->getMessage();
+            }
         }
 
         function setUrl($Url)
@@ -90,7 +97,7 @@
                     throw new \Exception("Invalid URL Passed.");
                 }
             } catch (\Exception $e) {
-                return $e->getMessage();
+                echo $e->getMessage();
             }
         }
 
@@ -113,22 +120,46 @@
 
         function setData($Data)
         {
-            $this->_Data = $Data;
+            try {
+                if (!empty($Data)) {
+                    $this->_Data = $Data;
+                } else {
+                    throw new \Exception("No data found for request.");
+                }
+            } catch (\Exception $e) {
+                echo $e->getMessage();
+            }
         }
 
         function setRequestTimeout($requestTimeout)
         {
-            $this->_requestTimeout = $requestTimeout;
+            try {
+                if(is_numeric($requestTimeout) || $requestTimeout <= 300){
+                    $this->_requestTimeout = (int)$requestTimeout;
+                } else {
+                    throw new \Exception("Invalid request timeout passed.");
+                }
+            } catch (\Exception $e) {
+                echo $e->getMessage();
+            }
         }
 
         function set_cookies($params = array())
         {
-            if (is_array($params)) {
-                $params = http_build_query($params, null, '&');
-            }
-            $this->setOption(CURLOPT_COOKIE, $params);
+            try {
+                if(!empty($params)){
+                    if (is_array($params)) {
+                        $params = http_build_query($params, null, '&');
+                    }
+                    $this->setOption(CURLOPT_COOKIE, $params);
 
-            return $this;
+                    return $this;
+                } else {
+                    throw new \Exception("Invalid cookie parameters passed.");
+                }
+            } catch (\Exception $e) {
+                echo $e->getMessage();
+            }
         }
 
         function http_header($header, $content = null)
@@ -161,6 +192,17 @@
             return $this;
         }
 
+        function options($options = array())
+        {
+            foreach ($options as $option_code => $option_value) {
+                $this->setOption($option_code, $option_value);
+            }
+
+            curl_setopt_array($this->_curl, $this->_options);
+
+            return $this;
+        }
+
         // HTTP Request Methods
 
         function get()
@@ -170,7 +212,6 @@
 
         function post()
         {
-
             if (is_array($this->_Data)) {
                 $this->_Data = http_build_query($this->_Data, null, '&');
             }
@@ -178,7 +219,6 @@
             $this->setMethod('post');
             $this->setOption(CURLOPT_POST, true);
             $this->setOption(CURLOPT_POSTFIELDS, $this->_Data);
-
         }
 
         function put()
@@ -200,13 +240,11 @@
 
             $this->setMethod('patch');
             $this->setOption(CURLOPT_POSTFIELDS, $this->_Data);
-
             $this->setOption(CURLOPT_HTTPHEADER, array('X-HTTP-Method-Override: PATCH'));
         }
 
         function delete()
         {
-
             if (is_array($this->_Data)) {
                 $this->_Data = http_build_query($this->_Data, null, '&');
             }
@@ -217,16 +255,12 @@
 
         // Curl Methods
 
-        function getResponse()
-        {
-            return $this->exeCurl();
-        }
-
-        function exeCurl()
+        function executeCurl()
         {
             curl_setopt($this->_curl, CURLOPT_URL, $this->_Url);
 
             $this->_options[CURLOPT_TIMEOUT] = $this->_requestTimeout;
+            $this->_options[CURLOPT_CONNECTTIMEOUT] = $this->_requestTimeout;
 
             if (!isset($this->_options[CURLOPT_RETURNTRANSFER])) {
                 $this->_options[CURLOPT_RETURNTRANSFER] = true;
@@ -236,7 +270,6 @@
             }
 
             if (!ini_get('safe_mode') && !ini_get('open_basedir')) {
-
                 if (!isset($this->_options[CURLOPT_FOLLOWLOCATION])) {
                     $this->_options[CURLOPT_FOLLOWLOCATION] = true;
                 }
