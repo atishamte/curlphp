@@ -1,0 +1,30 @@
+{
+  "name": "curlphp/httpcurl",
+  "description": "PHP cURL library for server side request.",
+  "version": "1.0.0",
+  "type": "library",
+  "keywords": [
+    "curl",
+    "curlphp",
+    "phpcurl",
+    "php curl"
+  ],
+  "homepage": "https://github.com/atishamte",
+  "time": "2016-04-09",
+  "license": "MIT",
+  "authors": [
+    {
+      "name": "Atish Amte",
+      "email": "atishamte@gmail.com",
+      "role": "Developer"
+    }
+  ],
+  "require": {
+    "php": ">=5.4.0"
+  },
+  "autoload": {
+    "psr-4": {
+      "phpcurl\\": "/phpcurl"
+    }
+  }
+}
