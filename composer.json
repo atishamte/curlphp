@@ -1,7 +1,7 @@
 {
   "name": "curlphp/httpcurl",
   "description": "PHP cURL library for server side request.",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "type": "library",
   "keywords": [
     "curl",
@@ -24,7 +24,7 @@
   },
   "autoload": {
     "psr-4": {
-      "phpcurl\\": "/curlphp"
+      "curlphp\\": "curlphp"
     }
   }
 }
